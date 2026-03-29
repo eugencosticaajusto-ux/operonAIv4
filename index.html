@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Operon AI v4 — Bogart Building Management</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --color-background-primary:#ffffff;--color-background-secondary:#f5f5f3;--color-background-tertiary:#efefed;
+  --color-background-info:#e6f1fb;--color-background-success:#e1f5ee;--color-background-warning:#faeeda;--color-background-danger:#fcebeb;
+  --color-text-primary:#1a1a18;--color-text-secondary:#6b6b67;--color-text-tertiary:#9d9d98;
+  --color-text-info:#185fa5;--color-text-success:#0f6e56;--color-text-warning:#633806;--color-text-danger:#a32d2d;
+  --color-border-tertiary:rgba(0,0,0,0.10);--color-border-secondary:rgba(0,0,0,0.18);
+  --color-border-danger:rgba(163,45,45,.4);
+  --border-radius-md:8px;--border-radius-lg:12px;
+  --sidebar-w:232px;--topbar-h:52px
+}
+@media(prefers-color-scheme:dark){:root{
+  --color-background-primary:#1e1e1c;--color-background-secondary:#2a2a28;--color-background-tertiary:#242422;
+  --color-background-info:#0c2840;--color-background-success:#062d20;--color-background-warning:#2d1e06;--color-background-danger:#2d0f0f;
+  --color-text-primary:#f0f0ec;--color-text-secondary:#a0a09b;--color-text-tertiary:#6a6a66;
+  --color-text-info:#85b7eb;--color-text-success:#5dcaa5;--color-text-warning:#fac775;--color-text-danger:#f09595;
+  --color-border-tertiary:rgba(255,255,255,0.10);--color-border-secondary:rgba(255,255,255,0.16)
+}}
+body{font-family:var(--font-sans);background:var(--color-background-tertiary);color:var(--color-text-primary)}
+
+/* ===== TOPBAR ===== */
+.topbar{
+  height:var(--topbar-h);background:var(--color-background-primary);
+  border-bottom:0.5px solid var(--color-border-tertiary);
+  display:flex;align-items:center;padding:0 14px;gap:10px;
+  position:fixed;top:0;left:0;right:0;z-index:100
+}
+.logo{font-size:15px;font-weight:500;letter-spacing:-.3px}
+.logo span{color:#1D9E75}
+.ltag{font-size:10px;padding:2px 6px;border-radius:10px;background:#E1F5EE;color:#0F6E56;font-weight:500;margin-left:2px}
+.tright{margin-left:auto;display:flex;align-items:center;gap:8px}
+.badge{font-size:11px;padding:3px 8px;border-radius:20px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);color:var(--color-text-secondary)}
+.av{width:28px;height:28px;border-radius:50%;background:#1D9E75;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#fff;cursor:pointer;flex-shrink:0}
+.gps-live{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#1D9E75}
+.gpsd{width:6px;height:6px;border-radius:50%;background:#1D9E75;animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.notifw{position:relative;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:6px;flex-shrink:0}
+.notifw:hover{background:var(--color-background-secondary)}
+.notifd{width:6px;height:6px;border-radius:50%;background:#E24B4A;position:absolute;top:2px;right:2px}
+
+/* ===== HAMBURGER BUTTON ===== */
+.ham-btn{
+  width:36px;height:36px;border-radius:var(--border-radius-md);
+  border:0.5px solid var(--color-border-secondary);
+  background:transparent;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  flex-shrink:0;padding:0
+}
+.ham-btn:hover{background:var(--color-background-secondary)}
+.ham-line{width:16px;height:1.5px;background:var(--color-text-primary);border-radius:2px;transition:all .25s}
+.ham-btn.open .ham-line:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+.ham-btn.open .ham-line:nth-child(2){opacity:0;transform:scaleX(0)}
+.ham-btn.open .ham-line:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+
+/* ===== SIDEBAR OVERLAY ===== */
+.sidebar-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0);z-index:80;
+  pointer-events:none;transition:background .25s
+}
+.sidebar-overlay.open{background:rgba(0,0,0,.35);pointer-events:all}
+
+/* ===== SIDEBAR ===== */
+.sidebar{
+  position:fixed;top:var(--topbar-h);left:0;bottom:0;
+  width:var(--sidebar-w);
+  background:var(--color-background-primary);
+  border-right:0.5px solid var(--color-border-tertiary);
+  overflow-y:auto;z-index:90;
+  transform:translateX(-100%);
+  transition:transform .28s cubic-bezier(.4,0,.2,1)
+}
+.sidebar.open{transform:translateX(0)}
+.ns{padding:11px 10px 3px;font-size:10px;font-weight:500;color:var(--color-text-tertiary);letter-spacing:.5px;text-transform:uppercase}
+.ni{
+  display:flex;align-items:center;gap:9px;
+  padding:8px 12px;margin:1px 6px;
+  border-radius:var(--border-radius-md);cursor:pointer;
+  font-size:13px;color:var(--color-text-secondary);transition:background .12s
+}
+.ni:hover{background:var(--color-background-secondary);color:var(--color-text-primary)}
+.ni.act{background:#E1F5EE;color:#0F6E56;font-weight:500}
+.ni svg{width:15px;height:15px;flex-shrink:0;opacity:.7}
+.ni.act svg{opacity:1}
+.nb{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:10px;background:var(--color-background-danger);color:var(--color-text-danger);font-weight:500}
+.ndiv{height:0.5px;background:var(--color-border-tertiary);margin:6px 12px}
+
+/* ===== MAIN CONTENT ===== */
+.content{
+  margin-top:var(--topbar-h);
+  padding:18px 16px;
+  min-height:calc(100vh - var(--topbar-h))
+}
+.sc{display:none}.sc.act{display:block}
+.pt{font-size:20px;font-weight:500;margin-bottom:3px}
+.ps{font-size:12px;color:var(--color-text-secondary);margin-bottom:16px}
+
+/* ===== CARDS ===== */
+.cr4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.cr2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.mc{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 14px}
+.ml{font-size:11px;color:var(--color-text-secondary);margin-bottom:5px}
+.mv{font-size:22px;font-weight:500}
+.mv.g{color:#1D9E75}.mv.a{color:var(--color-text-warning)}.mv.r{color:var(--color-text-danger)}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:14px 16px;margin-bottom:14px}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.ctitle{font-size:13px;font-weight:500}
+
+/* ===== BUTTONS ===== */
+.btn{padding:7px 14px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-primary);font-size:13px;cursor:pointer;font-family:var(--font-sans)}
+.btn:hover{background:var(--color-background-secondary)}
+.btn-p{background:#1D9E75;color:#fff;border-color:#1D9E75}.btn-p:hover{background:#0F6E56}
+.btn-s{padding:5px 10px;font-size:12px}
+.btn-d{color:var(--color-text-danger);border-color:var(--color-border-danger)}
+.btn-full{width:100%;display:block;text-align:center;padding:11px}
+
+/* ===== TABLE — mobile scroll ===== */
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:500px}
+th{text-align:left;padding:8px 10px;font-weight:500;color:var(--color-text-secondary);border-bottom:0.5px solid var(--color-border-tertiary);font-size:11px;white-space:nowrap}
+td{padding:9px 10px;border-bottom:0.5px solid var(--color-border-tertiary);color:var(--color-text-primary);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--color-background-secondary)}
+
+/* ===== PILLS ===== */
+.sp{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.sn{background:var(--color-background-info);color:var(--color-text-info)}
+.sa{background:#FAEEDA;color:#633806}
+.sl{background:var(--color-background-warning);color:var(--color-text-warning)}
+.sf{background:#E1F5EE;color:#0F6E56}
+.sr2{background:var(--color-background-secondary);color:var(--color-text-secondary)}
+.su{background:var(--color-background-danger);color:var(--color-text-danger)}
+.sno{background:#EAF3DE;color:#27500A}
+.sd{background:#E1F5EE;color:#0F6E56}
+.so{background:var(--color-background-warning);color:var(--color-text-warning)}
+.sc2{background:var(--color-background-secondary);color:var(--color-text-secondary)}
+
+/* ===== FORM ===== */
+.si{padding:8px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-size:13px;font-family:var(--font-sans);width:100%}
+.si:focus{outline:none;border-color:#1D9E75}
+select{padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-size:12px;font-family:var(--font-sans)}
+select:focus{outline:none;border-color:#1D9E75}
+.fc{padding:5px 12px;border-radius:20px;border:0.5px solid var(--color-border-secondary);background:transparent;font-size:12px;cursor:pointer;color:var(--color-text-secondary);font-family:var(--font-sans);white-space:nowrap}
+.fc.act{background:#1D9E75;color:#fff;border-color:#1D9E75}
+.fc:hover:not(.act){background:var(--color-background-secondary)}
+.fr{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.form-label{font-size:11px;font-weight:500;color:var(--color-text-secondary);margin-bottom:4px;display:block}
+.form-input{width:100%;padding:9px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-size:13px;font-family:var(--font-sans)}
+.form-input:focus{outline:none;border-color:#1D9E75}
+.form-select{width:100%;padding:9px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-size:13px;font-family:var(--font-sans)}
+.form-select:focus{outline:none;border-color:#1D9E75}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+
+/* ===== DATE RANGE ===== */
+.drb{display:inline-flex;align-items:center;gap:6px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:6px 10px;font-size:12px;cursor:pointer;color:var(--color-text-secondary)}
+
+/* ===== BARS ===== */
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.bar-label{font-size:12px;color:var(--color-text-secondary);width:90px;flex-shrink:0;text-align:right}
+.bar-track{flex:1;height:8px;background:var(--color-background-secondary);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;background:#1D9E75}
+.bar-val{font-size:12px;font-weight:500;width:44px;flex-shrink:0}
+
+/* ===== CALENDAR ===== */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-hdr{text-align:center;font-size:11px;font-weight:500;color:var(--color-text-secondary);padding:4px 2px}
+.cal-day{min-height:60px;border-radius:6px;padding:5px;border:0.5px solid var(--color-border-tertiary);background:var(--color-background-primary);cursor:pointer;overflow:hidden}
+.cal-day.today{border-color:#1D9E75}
+.cal-day.om{opacity:.35}
+.cal-num{font-size:11px;font-weight:500;margin-bottom:2px;color:var(--color-text-secondary)}
+.cal-day.today .cal-num{color:#1D9E75}
+.cal-evt{font-size:9px;padding:1px 3px;border-radius:3px;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ce-h{background:#E1F5EE;color:#0F6E56}.ce-e{background:#E6F1FB;color:#185FA5}
+.ce-i{background:#FAEEDA;color:#633806}.ce-u{background:#FCEBEB;color:#A32D2D}.ce-c{background:#EAF3DE;color:#27500A}
+
+/* ===== CHAT ===== */
+.chat-w{display:flex;flex-direction:column;gap:10px;height:300px;overflow-y:auto;padding:4px 0 10px}
+.msg-u{align-self:flex-end;background:#1D9E75;color:#fff;padding:9px 13px;border-radius:12px 12px 2px 12px;font-size:13px;max-width:80%}
+.msg-a{align-self:flex-start;background:var(--color-background-secondary);padding:9px 13px;border-radius:12px 12px 12px 2px;font-size:13px;max-width:85%;border:0.5px solid var(--color-border-tertiary)}
+.msg-albl{font-size:10px;color:var(--color-text-tertiary);margin-bottom:3px;font-weight:500}
+
+/* ===== AGENT STATUS ===== */
+.agent-sb{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:14px 16px;margin-bottom:14px}
+.pulse-dot{width:8px;height:8px;border-radius:50%;background:#1D9E75;display:inline-block;animation:pulse 2s infinite}
+
+/* ===== MAP ===== */
+.map-wrap{background:var(--color-background-secondary);border-radius:var(--border-radius-md);position:relative;overflow:hidden;border:0.5px solid var(--color-border-tertiary)}
+.map-car{position:absolute;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:500;border:2px solid #fff;cursor:pointer}
+.m-av{background:#1D9E75;color:#fff}.m-bu{background:#EF9F27;color:#fff}.m-of{background:#888;color:#fff}
+.map-pin{position:absolute;width:12px;height:12px;border-radius:50%;border:2px solid #fff;cursor:pointer}
+
+/* ===== TABS ===== */
+.tabs{display:flex;gap:2px;margin-bottom:16px;border-bottom:0.5px solid var(--color-border-tertiary);overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{padding:8px 14px;font-size:13px;color:var(--color-text-secondary);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;flex-shrink:0}
+.tab.on{border-bottom-color:#1D9E75;color:#1D9E75;font-weight:500}
+
+/* ===== NI2 ===== */
+.ni2{width:72px;padding:6px 8px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-size:12px;font-family:var(--font-sans)}
+.ni2:focus{outline:none;border-color:#1D9E75}
+
+/* ===== GRID ===== */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+
+/* ===== FLEET ===== */
+.exp-ok{color:#1D9E75;font-size:11px;font-weight:500}
+.exp-warn{color:var(--color-text-warning);font-size:11px;font-weight:500}
+.exp-bad{color:var(--color-text-danger);font-size:11px;font-weight:500}
+.tav{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:#fff;flex-shrink:0}
+
+/* ===== TOGGLE ===== */
+.toggle{width:38px;height:22px;border-radius:11px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);position:relative;cursor:pointer;flex-shrink:0}
+.toggle.on{background:#1D9E75;border-color:#1D9E75}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .15s}
+.toggle.on::after{left:19px}
+
+/* ===== SETTINGS ROW ===== */
+.set-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.set-row:last-child{border-bottom:none}
+
+/* ===== REPORTS ===== */
+.rep-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:16px;margin-bottom:12px;position:relative}
+.rep-badge{position:absolute;top:12px;right:12px;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:500}
+.rep-active{background:#E1F5EE;color:#0F6E56}
+.rep-paused{background:var(--color-background-secondary);color:var(--color-text-secondary)}
+
+/* ===== FLUX ===== */
+.fx-node{padding:8px 16px;border-radius:var(--border-radius-md);font-size:12px;font-weight:500;text-align:center;min-width:120px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary)}
+.fx-s{background:#E1F5EE;color:#0F6E56;border-color:#5DCAA5}
+.fx-d{background:#FAEEDA;color:#633806;border-color:#FAC775}
+.fx-e{background:#EAF3DE;color:#27500A;border-color:#97C459}
+.fx-r{background:#FCEBEB;color:#A32D2D;border-color:#F09595}
+.fx-arr{width:1px;height:18px;background:var(--color-border-secondary);margin:0 auto;position:relative}
+.fx-arr::after{content:'';position:absolute;bottom:-3px;left:-3px;width:7px;height:7px;border-right:1px solid var(--color-border-secondary);border-bottom:1px solid var(--color-border-secondary);transform:rotate(45deg)}
+
+/* ===== MODAL ===== */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:flex-start;justify-content:center;padding:60px 16px 16px;overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal-box{background:var(--color-background-primary);border-radius:var(--border-radius-lg);padding:20px;width:100%;max-width:500px;border:0.5px solid var(--color-border-tertiary)}
+.modal-title{font-size:15px;font-weight:500;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.modal-close{cursor:pointer;font-size:22px;color:var(--color-text-secondary);line-height:1;padding:0 4px}
+
+/* ===== LOGIN ===== */
+#ls{position:fixed;inset:0;background:var(--color-background-secondary);display:flex;align-items:center;justify-content:center;z-index:300;padding:20px}
+.lb{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:32px 28px;width:100%;max-width:360px}
+.ll{font-size:22px;font-weight:500;text-align:center;margin-bottom:4px}.ll span{color:#1D9E75}
+.lsub{font-size:12px;color:var(--color-text-secondary);text-align:center;margin-bottom:22px}
+.fi{width:100%;padding:11px 12px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-size:14px;font-family:var(--font-sans);margin-bottom:12px}
+.fi:focus{outline:none;border-color:#1D9E75}
+.fl{font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:5px;display:block}
+.lbtn{width:100%;padding:12px;border-radius:var(--border-radius-md);background:#1D9E75;color:#fff;border:none;font-size:15px;font-weight:500;cursor:pointer;font-family:var(--font-sans);margin-top:4px}
+.lbtn:hover{background:#0F6E56}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:600px){
+  .cr4{grid-template-columns:1fr 1fr}
+  .two-col{grid-template-columns:1fr}
+  .three-col{grid-template-columns:1fr}
+  .form-row{grid-template-columns:1fr}
+  .badge{display:none}
+  .gps-live{display:none}
+  .pt{font-size:17px}
+  .topbar{padding:0 10px;gap:8px}
+}
+@media(max-width:380px){
+  .cr4{grid-template-columns:1fr 1fr}
+  .mv{font-size:18px}
+}
+
+/* ===== PERF CLIENT ===== */
+.perf-interval-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px;padding:12px 14px;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg)}
+.ep-row{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:var(--border-radius-md);background:var(--color-background-secondary);margin-bottom:8px}
+.ep-name{font-size:12px;font-weight:500;min-width:110px;flex-shrink:0}
+.ep-bar-wrap{flex:1;height:9px;background:var(--color-background-primary);border-radius:5px;overflow:hidden;border:0.5px solid var(--color-border-tertiary)}
+.ep-bar{height:100%;border-radius:5px;background:#1D9E75}
+.ep-hrs{font-size:12px;font-weight:500;min-width:40px;text-align:right;flex-shrink:0}
+.ep-tkt{font-size:11px;color:var(--color-text-secondary);min-width:55px;text-align:right;flex-shrink:0}
+
+/* TEAM CARD */
+.tc{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:12px 14px}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="ls">
+  <div class="lb">
+    <div class="ll">Operon <span>AI</span></div>
+    <div class="lsub">Building Management · Bogart</div>
+    <div style="height:1px;background:var(--color-border-tertiary);margin:0 0 20px"></div>
+    <label class="fl">Email</label>
+    <input class="fi" type="email" value="eugen@bogart.ro" autocomplete="email">
+    <label class="fl">Parolă</label>
+    <input class="fi" type="password" value="••••••••" autocomplete="current-password">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--color-text-secondary);cursor:pointer"><input type="checkbox" checked style="accent-color:#1D9E75;width:15px;height:15px"> Ține-mă conectat</label>
+      <span style="font-size:13px;color:#1D9E75;cursor:pointer">Am uitat parola</span>
+    </div>
+    <button class="lbtn" onclick="doLogin()">Autentificare</button>
+    <div style="text-align:center;font-size:11px;color:var(--color-text-tertiary);margin-top:18px">Operon AI v4.0 · Bogart Building Management</div>
+  </div>
+</div>
+
+<!-- ===== TOPBAR ===== -->
+<div class="topbar">
+  <button class="ham-btn" id="hamBtn" onclick="toggleSidebar()" aria-label="Meniu">
+    <div class="ham-line"></div>
+    <div class="ham-line"></div>
+    <div class="ham-line"></div>
+  </button>
+  <div class="logo">Operon <span>AI</span><span class="ltag">v4</span></div>
+  <div class="tright">
+    <div class="gps-live"><div class="gpsd"></div><span>GPS · 6</span></div>
+    <div class="badge">Admin — Eugen M.</div>
+    <div class="notifw">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1.5a5 5 0 0 1 5 5c0 2.5-1 4-2.5 5H5.5C4 11.5 3 10 3 6.5a5 5 0 0 1 5-5z"/><path d="M6 11.5v.5a2 2 0 0 0 4 0v-.5"/></svg>
+      <div class="notifd"></div>
+    </div>
+    <div class="av">EM</div>
+  </div>
+</div>
+
+<!-- ===== SIDEBAR OVERLAY ===== -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar" id="sidebar">
+  <div class="ns">Principal</div>
+  <div class="ni act" onclick="go('dashboard')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>Dashboard</div>
+  <div class="ni" onclick="go('asistent')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="6" r="4"/><path d="M2 14c0-3.3 2.7-5 6-5s6 1.7 6 5"/></svg>Asistent AI</div>
+  <div class="ni" onclick="go('tichete')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 6h6M5 9h4"/></svg>Tichete<div class="nb">7</div></div>
+  <div class="ni" onclick="go('maps')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1C5.8 1 4 2.8 4 5c0 3 4 9 4 9s4-6 4-9c0-2.2-1.8-4-4-4z"/><circle cx="8" cy="5" r="1.5"/></svg>Maps</div>
+  <div class="ni" onclick="go('calendar')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="3" width="13" height="11" rx="2"/><path d="M5 1.5v3M11 1.5v3M1.5 7h13"/></svg>Calendar</div>
+  <div class="ni" onclick="go('flota')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="5" width="14" height="7" rx="2"/><path d="M4 5V4a2 2 0 0 1 4 0v1M8 5V4a2 2 0 0 1 4 0v1"/><circle cx="4.5" cy="8.5" r="1"/><circle cx="11.5" cy="8.5" r="1"/></svg>Flotă &amp; Personal</div>
+  <div class="ns">Rapoarte</div>
+  <div class="ni" onclick="go('pontaj')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 2"/></svg>Pontaj</div>
+  <div class="ni" onclick="go('perf-teh')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 12l4-5 3 3 3-5 3 4"/></svg>Perf. Tehnicieni</div>
+  <div class="ni" onclick="go('perf-client')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="8" width="3" height="6"/><rect x="6.5" y="5" width="3" height="9"/><rect x="11" y="2" width="3" height="12"/></svg>Perf. Clienți</div>
+  <div class="ni" onclick="go('financiar')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v1m0 4v1m-1.5-4h2a1 1 0 0 1 0 2h-1a1 1 0 0 0 0 2h2"/></svg>Financiar</div>
+  <div class="ni" onclick="go('rapoarte')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2h10a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M5 6h6M5 9h4M11 10l1.5 1.5L15 9"/></svg>Rapoarte<div class="nb" style="background:#E1F5EE;color:#0F6E56">4</div></div>
+  <div class="ndiv"></div>
+  <div class="ns">Admin</div>
+  <div class="ni" onclick="go('filemanager')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h4l1.5 2H12.5A1.5 1.5 0 0 1 14 6.5v5A1.5 1.5 0 0 1 12.5 13h-9A1.5 1.5 0 0 1 2 11.5v-7z"/></svg>File Manager</div>
+  <div class="ni" onclick="go('usage')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v3M12.2 3.8l-2.1 2.1M14 8h-3M12.2 12.2l-2.1-2.1M8 14v-3M3.8 12.2l2.1-2.1M2 8h3M3.8 3.8l2.1 2.1"/></svg>Usage</div>
+  <div class="ni" onclick="go('flux')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="3" cy="8" r="2"/><circle cx="13" cy="4" r="2"/><circle cx="13" cy="12" r="2"/><path d="M5 8h3l2-3.5M5 8h3l2 3.5"/></svg>Flux</div>
+  <div class="ni" onclick="go('setari')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.1 3.1l1.4 1.4M11.5 11.5l1.4 1.4M3.1 12.9l1.4-1.4M11.5 4.5l1.4-1.4"/></svg>Setări</div>
+  <div style="height:16px"></div>
+</div>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="content">
+
+<!-- DASHBOARD -->
+<div id="screen-dashboard" class="sc act">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+    <div><div class="pt">Dashboard</div><div class="ps" style="margin:0">Duminică, 29 martie 2026</div></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+      <div class="drb">📅 1–29 mar 2026</div>
+      <div class="fc act">Azi</div><div class="fc">7 zile</div><div class="fc">Lună</div>
+    </div>
+  </div>
+  <div class="cr4">
+    <div class="mc"><div class="ml">Tichete active</div><div class="mv a">23</div></div>
+    <div class="mc"><div class="ml">Urgente nealocate</div><div class="mv r">7</div></div>
+    <div class="mc"><div class="ml">Echipe active</div><div class="mv g">6/8</div></div>
+    <div class="mc"><div class="ml">Finalizate</div><div class="mv g">148</div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ctitle">Tichete urgente nealocate</div><button class="btn btn-s" onclick="go('tichete')">Toate →</button></div>
+    <div class="table-scroll">
+      <table>
+        <tr><th>#</th><th>Client</th><th>Locație</th><th>Tip</th><th>Prio.</th><th></th></tr>
+        <tr><td style="font-weight:500;color:#1D9E75">#1042</td><td>Globalworth</td><td>Pipera T2</td><td>HVAC</td><td><span class="sp su">Urgent</span></td><td><button class="btn btn-s btn-p">Alocă</button></td></tr>
+        <tr><td style="font-weight:500;color:#1D9E75">#1044</td><td>One United</td><td>Floreasca P3</td><td>Electric</td><td><span class="sp su">Urgent</span></td><td><button class="btn btn-s btn-p">Alocă</button></td></tr>
+        <tr><td style="font-weight:500;color:#1D9E75">#1047</td><td>Bogart Res.</td><td>Militari B1</td><td>Instalații</td><td><span class="sp sno">Normal</span></td><td><button class="btn btn-s">Alocă</button></td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ctitle">Status echipe</div><button class="btn btn-s" onclick="go('maps')">Hartă →</button></div>
+    <div class="table-scroll">
+      <table>
+        <tr><th>Echipă</th><th>Tehnicieni</th><th>Status</th></tr>
+        <tr><td style="font-weight:500">E1 Popescu</td><td style="font-size:11px">I. Popescu + A. Radu</td><td><span class="sp sl">La client</span></td></tr>
+        <tr><td style="font-weight:500">E2 Ionescu</td><td style="font-size:11px">M. Ionescu + C. Popa</td><td><span class="sp sd">Disponibilă</span></td></tr>
+        <tr><td style="font-weight:500">E3 Dumitru</td><td style="font-size:11px">G. Dumitru + L. Stan</td><td><span class="sp so">În drum</span></td></tr>
+        <tr><td style="font-weight:500">E4 Marin</td><td style="font-size:11px">D. Marin + T. Vasile</td><td><span class="sp sc2">Concediu</span></td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ctitle" style="margin-bottom:10px">Activitate recentă agent</div>
+    <div style="display:flex;flex-direction:column;gap:0">
+      <div style="display:flex;gap:10px;font-size:13px;padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary)"><div style="width:7px;height:7px;border-radius:50%;background:#1D9E75;flex-shrink:0;margin-top:4px"></div><div><div>Tichet #1042 alocat automat → E1 Popescu</div><div style="font-size:11px;color:var(--color-text-tertiary)">09:14</div></div></div>
+      <div style="display:flex;gap:10px;font-size:13px;padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary)"><div style="width:7px;height:7px;border-radius:50%;background:#378ADD;flex-shrink:0;margin-top:4px"></div><div><div>WhatsApp E3 — PRELUAT #1039</div><div style="font-size:11px;color:var(--color-text-tertiary)">08:52</div></div></div>
+      <div style="display:flex;gap:10px;font-size:13px;padding:8px 0"><div style="width:7px;height:7px;border-radius:50%;background:#EF9F27;flex-shrink:0;margin-top:4px"></div><div><div>E4 Marin → concediu · redistribuite</div><div style="font-size:11px;color:var(--color-text-tertiary)">08:41</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ASISTENT -->
+<div id="screen-asistent" class="sc">
+  <div class="pt">Asistent AI</div><div class="ps">Comunică cu agentul operațional</div>
+  <div class="agent-sb">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:500;color:var(--color-text-secondary)">Status agent</div>
+      <div style="display:flex;align-items:center;gap:6px"><div class="pulse-dot"></div><div style="font-size:13px;font-weight:500;color:#1D9E75">Activ · Conectat</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;font-size:12px">
+      <div><div style="font-size:10px;color:var(--color-text-tertiary);margin-bottom:2px">WhatsApp</div><div style="display:flex;align-items:center;gap:4px"><div style="width:6px;height:6px;border-radius:50%;background:#1D9E75"></div>Conectat</div></div>
+      <div><div style="font-size:10px;color:var(--color-text-tertiary);margin-bottom:2px">GPS</div><div style="display:flex;align-items:center;gap:4px"><div style="width:6px;height:6px;border-radius:50%;background:#1D9E75"></div>6 mașini</div></div>
+      <div><div style="font-size:10px;color:var(--color-text-tertiary);margin-bottom:2px">Tokeni azi</div><div style="font-weight:500">84.200</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div style="font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:8px">Comenzi rapide</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+      <button class="fc">creează tichet</button><button class="fc">tichete urgente</button><button class="fc">concedii</button><button class="fc">pontaj</button><button class="fc">recomandare echipe</button>
+    </div>
+    <div class="chat-w">
+      <div class="msg-a"><div class="msg-albl">OPERON AI AGENT</div>Bună dimineața, Eugen. Ai 7 tichete nealocate (2 urgente). E4 Marin concediu până 1 apr. Dorești realocare automată?</div>
+      <div class="msg-u">arată activitatea E2 pe Globalworth luna aceasta</div>
+      <div class="msg-a"><div class="msg-albl">OPERON AI AGENT</div>E2 Ionescu — Globalworth, mart. 2026: 8 tichete · 22h 40min · 187 km · timp mediu 2h 50min. Raport PDF sau Excel?</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <input type="text" class="si" placeholder="Scrie un mesaj...">
+      <button class="btn btn-p" style="white-space:nowrap;flex-shrink:0">Trimite</button>
+    </div>
+  </div>
+</div>
+
+<!-- TICHETE -->
+<div id="screen-tichete" class="sc">
+  <div class="pt">Tichete</div><div class="ps">Gestionare intervenții tehnice</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center">
+    <input class="si" placeholder="Caută..." style="max-width:180px">
+    <select><option>Toate statusurile</option><option>Nou</option><option>Alocat</option><option>În lucru</option><option>Finalizat</option></select>
+    <select><option>Categorii</option><option>HVAC</option><option>Electric</option></select>
+    <div class="drb">📅 29 mar</div>
+    <button class="btn btn-p btn-s" style="margin-left:auto">+ Tichet nou</button>
+  </div>
+  <div class="fr">
+    <div class="fc act">Toate (47)</div><div class="fc">Urgente (9)</div><div class="fc">Nealocate (7)</div><div class="fc">În lucru (8)</div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="table-scroll">
+      <table style="min-width:600px">
+        <tr><th>#</th><th>Client</th><th>Locație</th><th>Tip</th><th>Prio.</th><th>Status</th><th>Echipă</th><th></th></tr>
+        <tr><td style="font-weight:500;color:#1D9E75">#1042</td><td>Globalworth</td><td>Pipera T2</td><td>HVAC</td><td><span class="sp su">Urgent</span></td><td><span class="sp sn">Nou</span></td><td style="color:var(--color-text-tertiary)">—</td><td><button class="btn btn-s btn-p">Alocă</button></td></tr>
+        <tr><td style="font-weight:500;color:#1D9E75">#1041</td><td>One United</td><td>Floreasca</td><td>Electric</td><td><span class="sp su">Urgent</span></td><td><span class="sp sa">Alocat</span></td><td>E2 Ionescu</td><td><button class="btn btn-s">Detalii</button></td></tr>
+        <tr><td style="font-weight:500;color:#1D9E75">#1040</td><td>Bogart Res.</td><td>Militari B1</td><td>Instalații</td><td><span class="sp sno">Normal</span></td><td><span class="sp sl">În lucru</span></td><td>E1 Popescu</td><td><button class="btn btn-s">Detalii</button></td></tr>
+        <tr><td style="font-weight:500;color:#1D9E75">#1038</td><td>Globalworth</td><td>Pipera T1</td><td>Handyman</td><td><span class="sp sno">Low</span></td><td><span class="sp sf">Finalizat</span></td><td>E5 Stan</td><td><button class="btn btn-s">Detalii</button></td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MAPS -->
+<div id="screen-maps" class="sc">
+  <div class="pt">Maps</div><div class="ps">Geolocație timp real · 6 mașini</div>
+  <div class="fr" style="margin-bottom:10px">
+    <select><option>Azi</option><option>Ultima oră</option></select>
+    <div class="fc act">Toate</div><div class="fc">Nealocate</div><div class="fc">În lucru</div>
+  </div>
+  <div class="map-wrap" style="height:300px;margin-bottom:12px">
+    <svg style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:.1" width="100%" height="100%"><defs><pattern id="mg" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0L0 0 0 28" fill="none" stroke="currentColor" stroke-width=".5"/></pattern></defs><rect width="100%" height="100%" fill="url(#mg)"/></svg>
+    <div style="position:absolute;top:45%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none"><div style="font-size:12px;color:var(--color-text-tertiary)">Google Maps / GPS live</div></div>
+    <div class="map-car m-av" style="top:22%;left:36%"><span style="font-size:8px">E1</span></div>
+    <div class="map-car m-av" style="top:48%;left:58%"><span style="font-size:8px">E2</span></div>
+    <div class="map-car m-bu" style="top:33%;left:66%"><span style="font-size:8px">E3</span></div>
+    <div class="map-car m-av" style="top:62%;left:42%"><span style="font-size:8px">E5</span></div>
+    <div class="map-car m-bu" style="top:40%;left:52%"><span style="font-size:8px">E6</span></div>
+    <div class="map-car m-of" style="top:68%;left:70%"><span style="font-size:8px">E7</span></div>
+    <div class="map-pin" style="top:20%;left:34%;background:#E24B4A"></div>
+    <div class="map-pin" style="top:54%;left:63%;background:#E24B4A"></div>
+    <div class="map-pin" style="top:37%;left:46%;background:#378ADD"></div>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+    <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--color-text-secondary)"><div style="width:16px;height:16px;border-radius:50%;background:#1D9E75;display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff">E</div>Disponibilă</div>
+    <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--color-text-secondary)"><div style="width:16px;height:16px;border-radius:50%;background:#EF9F27;display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff">E</div>Ocupată</div>
+    <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--color-text-secondary)"><div style="width:8px;height:8px;border-radius:50%;background:#E24B4A"></div>Urgent</div>
+    <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--color-text-secondary)"><div style="width:8px;height:8px;border-radius:50%;background:#378ADD"></div>Alocat</div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="table-scroll">
+      <table>
+        <tr><th>Echipă</th><th>Tehnicieni</th><th>Mașină</th><th>GPS</th><th>Status</th></tr>
+        <tr><td style="font-weight:500">E1 Popescu</td><td style="font-size:11px">I. Popescu · A. Radu</td><td>B-123-BBM</td><td><span style="color:#1D9E75;font-size:11px">● activ</span></td><td><span class="sp sl">La client</span></td></tr>
+        <tr><td style="font-weight:500">E2 Ionescu</td><td style="font-size:11px">M. Ionescu · C. Popa</td><td>B-456-BBM</td><td><span style="color:#1D9E75;font-size:11px">● activ</span></td><td><span class="sp sd">Disponibilă</span></td></tr>
+        <tr><td style="font-weight:500">E3 Dumitru</td><td style="font-size:11px">G. Dumitru · L. Stan</td><td>B-789-BBM</td><td><span style="color:#1D9E75;font-size:11px">● activ</span></td><td><span class="sp so">În drum</span></td></tr>
+        <tr><td style="font-weight:500">E4 Marin</td><td style="font-size:11px">D. Marin · T. Vasile</td><td>B-321-BBM</td><td><span style="color:var(--color-text-tertiary);font-size:11px">○ off</span></td><td><span class="sp sc2">Concediu</span></td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- CALENDAR -->
+<div id="screen-calendar" class="sc">
+  <div class="pt">Calendar</div><div class="ps">Planificare și reprogramare tichete</div>
+  <div class="card">
+    <div class="ch" style="flex-wrap:wrap;gap:8px">
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn btn-s">←</button>
+        <div style="font-size:14px;font-weight:500">Martie 2026</div>
+        <button class="btn btn-s">→</button>
+      </div>
+      <div style="display:flex;gap:5px">
+        <div class="fc act">Lună</div><div class="fc">Săpt.</div><div class="fc">Zi</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+      <select style="font-size:12px"><option>Toate echipele</option><option>E1</option></select>
+      <select style="font-size:12px"><option>Toți clienții</option></select>
+    </div>
+    <div class="cal-grid">
+      <div class="cal-hdr">L</div><div class="cal-hdr">M</div><div class="cal-hdr">M</div><div class="cal-hdr">J</div><div class="cal-hdr">V</div><div class="cal-hdr">S</div><div class="cal-hdr">D</div>
+      <div class="cal-day om"><div class="cal-num">23</div></div><div class="cal-day om"><div class="cal-num">24</div></div><div class="cal-day om"><div class="cal-num">25</div></div><div class="cal-day om"><div class="cal-num">26</div></div>
+      <div class="cal-day"><div class="cal-num">27</div><div class="cal-evt ce-h">E1·HVAC</div><div class="cal-evt ce-e">E3·Elec</div></div>
+      <div class="cal-day"><div class="cal-num">28</div><div class="cal-evt ce-i">E2·Inst</div></div>
+      <div class="cal-day today"><div class="cal-num">29</div><div class="cal-evt ce-h">E1·#1040</div><div class="cal-evt ce-u">2 urgente</div></div>
+      <div class="cal-day"><div class="cal-num">30</div><div class="cal-evt ce-i">E5·Prog</div></div>
+      <div class="cal-day"><div class="cal-num">31</div></div>
+      <div class="cal-day om" style="background:var(--color-background-secondary)"><div class="cal-num" style="color:#1D9E75">1</div><div class="cal-evt ce-c">Conc E4</div></div>
+      <div class="cal-day om" style="background:var(--color-background-secondary)"><div class="cal-num" style="color:#1D9E75">2</div><div class="cal-evt ce-c">Conc E4</div></div>
+      <div class="cal-day om"><div class="cal-num">3</div></div><div class="cal-day om"><div class="cal-num">4</div></div><div class="cal-day om"><div class="cal-num">5</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- FLOTA -->
+<div id="screen-flota" class="sc">
+  <div class="pt">Flotă &amp; Personal</div><div class="ps">Mașini, echipe, tehnicieni și personal TESA</div>
+  <div class="tabs">
+    <div class="tab on" id="ft1" onclick="ftab(1)">Mașini</div>
+    <div class="tab" id="ft2" onclick="ftab(2)">Echipe</div>
+    <div class="tab" id="ft3" onclick="ftab(3)">Alocare</div>
+    <div class="tab" id="ft4" onclick="ftab(4)">Personal TESA</div>
+  </div>
+  <div id="fp1">
+    <div class="card">
+      <div class="ch"><div class="ctitle">Registru flotă</div><button class="btn btn-s btn-p">+ Mașină</button></div>
+      <div class="table-scroll">
+        <table style="min-width:700px">
+          <tr><th>Nr. mașină</th><th>Model</th><th>Km</th><th>ITP</th><th>RCA</th><th>Rovign.</th><th>Cauciucuri</th><th>Revizie</th><th>Status</th></tr>
+          <tr><td style="font-weight:500">B-123-BBM</td><td>Renault Trafic</td><td>87.400</td><td><span class="exp-ok">aug 2026</span></td><td><span class="exp-warn">apr 2026 ⚠</span></td><td><span class="exp-ok">dec 2026</span></td><td><span class="exp-ok">vara 2026</span></td><td><span class="exp-warn">la 90k ⚠</span></td><td><span class="sp sd">OK</span></td></tr>
+          <tr><td style="font-weight:500">B-456-BBM</td><td>VW Crafter</td><td>124.200</td><td><span class="exp-ok">nov 2026</span></td><td><span class="exp-ok">oct 2026</span></td><td><span class="exp-bad">expirat ✕</span></td><td><span class="exp-ok">iarnă</span></td><td><span class="exp-ok">la 130k</span></td><td><span class="sp su">Acțiune!</span></td></tr>
+          <tr><td style="font-weight:500">B-789-BBM</td><td>Mercedes Sprinter</td><td>63.100</td><td><span class="exp-ok">mar 2027</span></td><td><span class="exp-ok">dec 2026</span></td><td><span class="exp-ok">dec 2026</span></td><td><span class="exp-warn">iarnă ⚠</span></td><td><span class="exp-ok">la 80k</span></td><td><span class="sp sd">OK</span></td></tr>
+          <tr><td style="font-weight:500">B-321-BBM</td><td>Ford Transit</td><td>101.700</td><td><span class="exp-warn">mai 2026 ⚠</span></td><td><span class="exp-ok">sep 2026</span></td><td><span class="exp-ok">dec 2026</span></td><td><span class="exp-ok">vara</span></td><td><span class="exp-bad">la 100k ✕</span></td><td><span class="sp su">Acțiune!</span></td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="card" style="background:var(--color-background-secondary)">
+      <div style="font-size:13px;font-weight:500;margin-bottom:10px;color:var(--color-text-danger)">Alerte active (3)</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
+        <div style="padding:10px 12px;background:var(--color-background-primary);border-radius:8px;border-left:3px solid var(--color-text-danger)"><span style="font-weight:500">B-456-BBM</span> — Rovignetă expirată, reînnoire imediată</div>
+        <div style="padding:10px 12px;background:var(--color-background-primary);border-radius:8px;border-left:3px solid var(--color-text-danger)"><span style="font-weight:500">B-321-BBM</span> — Revizie depășită km, service urgent</div>
+        <div style="padding:10px 12px;background:var(--color-background-primary);border-radius:8px;border-left:3px solid var(--color-text-warning)"><span style="font-weight:500">B-123-BBM</span> — RCA expiră în 28 zile</div>
+      </div>
+    </div>
+  </div>
+  <div id="fp2" style="display:none">
+    <div class="ch" style="margin-bottom:14px"><div class="ctitle">Echipe tehnice</div><button class="btn btn-s btn-p" onclick="openModal('modal-echipa')">+ Echipă nouă</button></div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="tc">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div style="font-size:14px;font-weight:500">E1 — Popescu</div><span class="sp sd">Activă</span></div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;padding:10px;background:var(--color-background-secondary);border-radius:8px">
+          <div class="tav" style="background:#1D9E75">IP</div>
+          <div style="flex:1"><div style="font-size:13px;font-weight:500">Ion Popescu</div><div style="font-size:11px;color:var(--color-text-secondary)">HVAC, Instalații</div></div>
+          <div style="text-align:right"><div style="font-size:10px;color:var(--color-text-tertiary)">WhatsApp</div><div style="font-size:12px;font-weight:500;color:#1D9E75">+40 721 000 001</div></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;padding:10px;background:var(--color-background-secondary);border-radius:8px">
+          <div class="tav" style="background:#378ADD">AR</div>
+          <div style="flex:1"><div style="font-size:13px;font-weight:500">Andrei Radu</div><div style="font-size:11px;color:var(--color-text-secondary)">HVAC, Electric</div></div>
+          <div style="text-align:right"><div style="font-size:10px;color:var(--color-text-tertiary)">WhatsApp</div><div style="font-size:12px;font-weight:500;color:#1D9E75">+40 721 000 002</div></div>
+        </div>
+        <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:10px">Mașină: B-123-BBM</div>
+        <div style="display:flex;gap:8px"><button class="btn btn-s">Editează</button><button class="btn btn-s btn-d">Dezactivează</button></div>
+      </div>
+      <div class="tc">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div style="font-size:14px;font-weight:500">E2 — Ionescu</div><span class="sp sd">Activă</span></div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;padding:10px;background:var(--color-background-secondary);border-radius:8px">
+          <div class="tav" style="background:#EF9F27">MI</div>
+          <div style="flex:1"><div style="font-size:13px;font-weight:500">Mihai Ionescu</div><div style="font-size:11px;color:var(--color-text-secondary)">Electric, Handyman</div></div>
+          <div style="text-align:right"><div style="font-size:10px;color:var(--color-text-tertiary)">WhatsApp</div><div style="font-size:12px;font-weight:500;color:#1D9E75">+40 722 000 003</div></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;padding:10px;background:var(--color-background-secondary);border-radius:8px">
+          <div class="tav" style="background:#D4537E">CP</div>
+          <div style="flex:1"><div style="font-size:13px;font-weight:500">Cosmin Popa</div><div style="font-size:11px;color:var(--color-text-secondary)">Electric, Zugrav</div></div>
+          <div style="text-align:right"><div style="font-size:10px;color:var(--color-text-tertiary)">WhatsApp</div><div style="font-size:12px;font-weight:500;color:#1D9E75">+40 722 000 004</div></div>
+        </div>
+        <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:10px">Mașină: B-456-BBM</div>
+        <div style="display:flex;gap:8px"><button class="btn btn-s">Editează</button><button class="btn btn-s btn-d">Dezactivează</button></div>
+      </div>
+      <div class="tc" style="border:0.5px dashed var(--color-border-secondary);display:flex;align-items:center;justify-content:center;min-height:100px;cursor:pointer" onclick="openModal('modal-echipa')">
+        <div style="text-align:center"><div style="font-size:28px;color:var(--color-text-tertiary)">+</div><div style="font-size:13px;color:var(--color-text-secondary)">Adaugă echipă</div></div>
+      </div>
+    </div>
+  </div>
+  <div id="fp3" style="display:none">
+    <div class="card">
+      <div class="ctitle" style="margin-bottom:14px">Alocare mașini → echipe</div>
+      <div class="table-scroll">
+        <table>
+          <tr><th>Echipă</th><th>Mașină alocată</th><th>Schimbă</th><th></th></tr>
+          <tr><td style="font-weight:500">E1 Popescu</td><td>B-123-BBM</td><td><select><option>B-123-BBM</option><option>B-456-BBM</option><option>—</option></select></td><td><button class="btn btn-s btn-p">Salvează</button></td></tr>
+          <tr><td style="font-weight:500">E2 Ionescu</td><td>B-456-BBM</td><td><select><option>B-456-BBM</option><option>B-123-BBM</option><option>—</option></select></td><td><button class="btn btn-s btn-p">Salvează</button></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div id="fp4" style="display:none">
+    <div class="ch" style="margin-bottom:14px">
+      <div><div class="ctitle">Personal TESA</div><div style="font-size:12px;color:var(--color-text-secondary);margin-top:2px">Raportare=Da → apare în Rapoarte</div></div>
+      <button class="btn btn-s btn-p" onclick="openModal('modal-tesa')">+ Persoană nouă</button>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="table-scroll">
+        <table style="min-width:600px">
+          <tr><th>Nume</th><th>Funcție</th><th>Email</th><th>Telefon</th><th>Drepturi</th><th>Raportare</th><th>Activ</th><th></th></tr>
+          <tr><td style="font-weight:500">Eugen Munteanu</td><td><span class="sp sf" style="font-size:10px">Manager Tehnic</span></td><td style="font-size:11px">eugen@bogart.ro</td><td style="font-size:11px">+40 740 000 001</td><td><span class="sp sd" style="font-size:10px">Admin</span></td><td><span style="color:#1D9E75;font-size:12px;font-weight:500">✓ Da</span></td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td><button class="btn btn-s">Edit</button></td></tr>
+          <tr><td style="font-weight:500">Mihai Dumitrescu</td><td><span class="sp sa" style="font-size:10px">Director Tehnic</span></td><td style="font-size:11px">mihai@bogart.ro</td><td style="font-size:11px">+40 740 000 002</td><td><span class="sp sa" style="font-size:10px">Director</span></td><td><span style="color:#1D9E75;font-size:12px;font-weight:500">✓ Da</span></td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td><button class="btn btn-s">Edit</button></td></tr>
+          <tr><td style="font-weight:500">Ana Gheorghe</td><td><span class="sp sn" style="font-size:10px">Coordonator</span></td><td style="font-size:11px">ana@bogart.ro</td><td style="font-size:11px">+40 740 000 003</td><td><span class="sp sn" style="font-size:10px">Coordonator</span></td><td><span style="color:#1D9E75;font-size:12px;font-weight:500">✓ Da</span></td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td><button class="btn btn-s">Edit</button></td></tr>
+          <tr><td style="font-weight:500">Radu Ioachim</td><td><span class="sp sr2" style="font-size:10px">Derulator</span></td><td style="font-size:11px">radu@bogart.ro</td><td style="font-size:11px">+40 740 000 004</td><td><span class="sp sr2" style="font-size:10px">Derulator</span></td><td><span style="color:var(--color-text-secondary);font-size:12px">— Nu</span></td><td><div class="toggle" onclick="this.classList.toggle('on')"></div></td><td><button class="btn btn-s">Edit</button></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PONTAJ -->
+<div id="screen-pontaj" class="sc">
+  <div class="pt">Pontaj</div><div class="ps">Ore lucrate din GPS + timestamps WhatsApp</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center">
+    <select><option>Săptămâna curentă</option><option>Săptămâna trecută</option><option>Luna curentă</option></select>
+    <select><option>Toate echipele</option><option>E1</option><option>E2</option></select>
+    <select><option>Toți tehnicienii</option><option>I. Popescu</option><option>A. Radu</option></select>
+    <div style="margin-left:auto;display:flex;gap:6px"><button class="btn btn-s">PDF</button><button class="btn btn-s btn-p">Excel</button></div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="table-scroll">
+      <table style="min-width:700px">
+        <tr><th>Echipă</th><th>Tehnicieni</th><th>Zi</th><th>Plecare</th><th>Sosire client</th><th>Plecare client</th><th>T. drum</th><th>T. efectiv</th><th>Total</th><th>Validat</th></tr>
+        <tr><td style="font-weight:500">E1 Popescu</td><td style="font-size:11px">I. Popescu / A. Radu</td><td>29 mar</td><td>07:15</td><td>08:02</td><td>11:30</td><td>47 min</td><td style="color:#1D9E75;font-weight:500">3h 28min</td><td style="font-weight:500">4h 15min</td><td><span style="color:#1D9E75">✓</span></td></tr>
+        <tr><td style="font-weight:500">E2 Ionescu</td><td style="font-size:11px">M. Ionescu / C. Popa</td><td>29 mar</td><td>08:00</td><td>08:45</td><td>—</td><td>45 min</td><td style="color:var(--color-text-tertiary)">în curs</td><td style="color:var(--color-text-tertiary)">—</td><td style="color:var(--color-text-tertiary)">Pendent</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PERF TEHNICIENI -->
+<div id="screen-perf-teh" class="sc">
+  <div class="pt">Perf. Tehnicieni</div><div class="ps">KPI operațional per echipă</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
+    <select><option>Luna curentă</option><option>Trimestru</option></select>
+    <select><option>Toate echipele</option></select>
+    <button class="btn btn-s" style="margin-left:auto">Export</button>
+  </div>
+  <div class="cr4">
+    <div class="mc"><div class="ml">Tichete avg</div><div class="mv">34</div></div>
+    <div class="mc"><div class="ml">T. răspuns avg</div><div class="mv a">18 min</div></div>
+    <div class="mc"><div class="ml">Km total</div><div class="mv">2.840</div></div>
+    <div class="mc"><div class="ml">Grad înc. avg</div><div class="mv g">74%</div></div>
+  </div>
+  <div class="card"><div class="ctitle" style="margin-bottom:12px">Grad încărcare (%)</div>
+    <div class="bar-row"><div class="bar-label">E1 Popescu</div><div class="bar-track"><div class="bar-fill" style="width:87%"></div></div><div class="bar-val">87%</div></div>
+    <div class="bar-row"><div class="bar-label">E2 Ionescu</div><div class="bar-track"><div class="bar-fill" style="width:74%"></div></div><div class="bar-val">74%</div></div>
+    <div class="bar-row"><div class="bar-label">E3 Dumitru</div><div class="bar-track"><div class="bar-fill" style="width:81%"></div></div><div class="bar-val">81%</div></div>
+    <div class="bar-row"><div class="bar-label">E5 Stan</div><div class="bar-track"><div class="bar-fill" style="width:62%;background:#EF9F27"></div></div><div class="bar-val" style="color:var(--color-text-warning)">62%</div></div>
+  </div>
+</div>
+
+<!-- PERF CLIENT -->
+<div id="screen-perf-client" class="sc">
+  <div class="pt">Perf. Clienți</div><div class="ps">Ore efective la client · exclusiv deplasare</div>
+  <div class="perf-interval-bar">
+    <div style="font-size:13px;font-weight:500;color:var(--color-text-secondary)">Interval:</div>
+    <div class="drb">📅 1 mar 2026</div>
+    <div style="font-size:12px;color:var(--color-text-tertiary)">→</div>
+    <div class="drb">📅 29 mar 2026</div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap">
+      <div class="fc act">Luna</div><div class="fc">Trim.</div><div class="fc">An</div>
+    </div>
+    <button class="btn btn-s btn-p">Aplică</button>
+  </div>
+  <div class="cr4">
+    <div class="mc"><div class="ml">Clienți activi</div><div class="mv">12</div></div>
+    <div class="mc"><div class="ml">Total tichete</div><div class="mv">181</div></div>
+    <div class="mc"><div class="ml">Ore efective</div><div class="mv g">487h</div></div>
+    <div class="mc"><div class="ml">Ore deplasare</div><div class="mv a">156h</div></div>
+  </div>
+  <div class="card">
+    <div class="ctitle" style="margin-bottom:12px">Ore efective per echipă</div>
+    <div class="ep-row"><div class="ep-name">E1 Popescu</div><div class="ep-bar-wrap"><div class="ep-bar" style="width:87%"></div></div><div class="ep-hrs" style="color:#1D9E75">146h</div><div class="ep-tkt">42 tich.</div></div>
+    <div class="ep-row"><div class="ep-name">E3 Dumitru</div><div class="ep-bar-wrap"><div class="ep-bar" style="width:80%"></div></div><div class="ep-hrs" style="color:#1D9E75">136h</div><div class="ep-tkt">38 tich.</div></div>
+    <div class="ep-row"><div class="ep-name">E2 Ionescu</div><div class="ep-bar-wrap"><div class="ep-bar" style="width:73%"></div></div><div class="ep-hrs">124h</div><div class="ep-tkt">35 tich.</div></div>
+    <div class="ep-row"><div class="ep-name">E5 Stan</div><div class="ep-bar-wrap"><div class="ep-bar" style="width:61%;background:#EF9F27"></div></div><div class="ep-hrs" style="color:var(--color-text-warning)">104h</div><div class="ep-tkt">29 tich.</div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ctitle">Detaliu per client</div><button class="btn btn-s">Export Excel</button></div>
+    <div class="table-scroll">
+      <table style="min-width:600px">
+        <tr><th>Client</th><th>Tichete</th><th>Ore efective</th><th>Ore deplasare</th><th>Eficiență</th><th>Tarif/h</th><th>Venit est.</th></tr>
+        <tr><td style="font-weight:500">Globalworth</td><td>67</td><td style="color:#1D9E75;font-weight:500">158h 20min</td><td style="color:var(--color-text-secondary)">39h 40min</td><td style="font-weight:500">80%</td><td>100 €</td><td style="color:#1D9E75;font-weight:500">15.833 €</td></tr>
+        <tr><td style="font-weight:500">One United</td><td>48</td><td style="color:#1D9E75;font-weight:500">112h 10min</td><td style="color:var(--color-text-secondary)">30h 50min</td><td style="font-weight:500">78%</td><td>105 €</td><td style="color:#1D9E75;font-weight:500">11.778 €</td></tr>
+        <tr><td style="font-weight:500">Skanska</td><td>31</td><td style="font-weight:500">87h 30min</td><td style="color:var(--color-text-secondary)">21h 30min</td><td style="font-weight:500">80%</td><td>95 €</td><td style="font-weight:500">8.313 €</td></tr>
+        <tr><td style="font-weight:500">Bogart Res.</td><td>24</td><td style="color:var(--color-text-warning);font-weight:500">54h 20min</td><td style="color:var(--color-text-secondary)">24h 40min</td><td style="color:var(--color-text-warning);font-weight:500">69%</td><td>90 €</td><td style="font-weight:500">4.888 €</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- FINANCIAR -->
+<div id="screen-financiar" class="sc">
+  <div class="pt">Financiar</div><div class="ps">Marjă brută și profitabilitate</div>
+  <div class="cr4">
+    <div class="mc"><div class="ml">Venit estimat</div><div class="mv g">64.300 €</div></div>
+    <div class="mc"><div class="ml">Cost manoperă</div><div class="mv r">38.500 €</div></div>
+    <div class="mc"><div class="ml">Profit brut</div><div class="mv g">25.800 €</div></div>
+    <div class="mc"><div class="ml">Marjă brută</div><div class="mv g">40%</div></div>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <div class="ctitle" style="margin-bottom:12px">Cost/h per echipă</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px">E1 Popescu <input class="ni2" value="35" type="number" style="margin-left:auto"> €/h <button class="btn btn-s">✓</button></div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px">E2 Ionescu <input class="ni2" value="35" type="number" style="margin-left:auto"> €/h <button class="btn btn-s">✓</button></div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px">E3 Dumitru <input class="ni2" value="38" type="number" style="margin-left:auto"> €/h <button class="btn btn-s">✓</button></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ctitle" style="margin-bottom:12px">Tarif vânzare/h per client</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px">Globalworth <input class="ni2" value="100" type="number" style="margin-left:auto"> €/h <button class="btn btn-s">✓</button></div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px">One United <input class="ni2" value="105" type="number" style="margin-left:auto"> €/h <button class="btn btn-s">✓</button></div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px">Skanska <input class="ni2" value="95" type="number" style="margin-left:auto"> €/h <button class="btn btn-s">✓</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RAPOARTE -->
+<div id="screen-rapoarte" class="sc">
+  <div class="pt">Rapoarte</div><div class="ps">Trimitere automată · destinatari din Personal TESA</div>
+  <div class="tabs">
+    <div class="tab on" id="rt1" onclick="rtab(1)">Rapoarte periodice</div>
+    <div class="tab" id="rt2" onclick="rtab(2)">Documente tichete</div>
+  </div>
+  <div id="rp1">
+    <div class="ch" style="margin-bottom:14px">
+      <div style="display:flex;gap:5px"><div class="fc act">Toate (3)</div><div class="fc">Active (2)</div><div class="fc">Pauzate (1)</div></div>
+      <button class="btn btn-p btn-s" onclick="openModal('modal-raport')">+ Raport nou</button>
+    </div>
+    <div class="rep-card">
+      <div class="rep-badge rep-active">Activ</div>
+      <div style="font-size:14px;font-weight:500;margin-bottom:4px">Raport săptămânal operațional</div>
+      <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:12px">Tichete · Pontaj · KPI echipe</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;font-size:12px">
+        <div><div style="font-size:10px;color:var(--color-text-tertiary)">Destinatar</div><div style="font-weight:500">Ana Gheorghe</div></div>
+        <div><div style="font-size:10px;color:var(--color-text-tertiary)">Email</div><div>ana@bogart.ro</div></div>
+        <div><div style="font-size:10px;color:var(--color-text-tertiary)">WhatsApp</div><div>+40 740 000 003</div></div>
+        <div><div style="font-size:10px;color:var(--color-text-tertiary)">Canal</div><div style="font-weight:500">📧 Email + 💬 WA</div></div>
+        <div><div style="font-size:10px;color:var(--color-text-tertiary)">Recurență</div><div style="font-weight:500">Luni · 08:00</div></div>
+        <div><div style="font-size:10px;color:var(--color-text-tertiary)">Ultimul trimis</div><div>22 mar 2026</div></div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <span class="sp sf" style="font-size:10px">Săptămânal</span>
+        <button class="btn btn-s" style="margin-left:auto">Trimite acum</button><button class="btn btn-s">Editează</button><button class="btn btn-s btn-d">Pauzează</button>
+      </div>
+    </div>
+    <div class="rep-card">
+      <div class="rep-badge rep-active">Activ</div>
+      <div style="font-size:14px;font-weight:500;margin-bottom:4px">Raport lunar financiar</div>
+      <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:12px">Venit · Marjă · Cost manoperă per client</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;font-size:12px">
+        <div><div style="font-size:10px;color:var(--color-text-tertiary)">Destinatar</div><div style="font-weight:500">Mihai Dumitrescu</div></div>
+        <div><div style="font-size:10px;color:var(--color-text-tertiary)">Email</div><div>mihai@bogart.ro</div></div>
+        <div><div style="font-size:10px;color:var(--color-text-tertiary)">Canal</div><div style="font-weight:500">📧 Email only</div></div>
+        <div><div style="font-size:10px;color:var(--color-text-tertiary)">Recurență</div><div style="font-weight:500">1 ale lunii · 09:00</div></div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <span class="sp sn" style="font-size:10px">Lunar</span>
+        <button class="btn btn-s" style="margin-left:auto">Trimite acum</button><button class="btn btn-s">Editează</button><button class="btn btn-s btn-d">Pauzează</button>
+      </div>
+    </div>
+    <div class="rep-card" style="opacity:.7">
+      <div class="rep-badge rep-paused">Pauzat</div>
+      <div style="font-size:14px;font-weight:500;margin-bottom:4px">Raport zilnic tichete</div>
+      <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:12px">Status tichete · Urgente deschise</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;font-size:12px">
+        <div><div style="font-size:10px;color:var(--color-text-tertiary)">Destinatar</div><div style="font-weight:500">Eugen Munteanu</div></div>
+        <div><div style="font-size:10px;color:var(--color-text-tertiary)">Canal</div><div style="font-weight:500">💬 WhatsApp only</div></div>
+        <div><div style="font-size:10px;color:var(--color-text-tertiary)">Recurență</div><div style="font-weight:500">Zilnic · 18:00</div></div>
+        <div><div style="font-size:10px;color:var(--color-text-tertiary)">Pauzat</div><div>15 mar 2026</div></div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <span class="sp sr2" style="font-size:10px">Zilnic</span>
+        <button class="btn btn-s btn-p" style="margin-left:auto">Reactivează</button><button class="btn btn-s">Editează</button>
+      </div>
+    </div>
+  </div>
+  <div id="rp2" style="display:none">
+    <div style="padding:12px 14px;background:var(--color-background-info);border-radius:var(--border-radius-md);margin-bottom:14px;font-size:13px;color:var(--color-text-info)">
+      La finalizarea unui tichet, agentul trimite automat un email cu subiectul <strong>„Documente tichet #[ID] — [Client]"</strong> cu pozele, PV-ul și facturile atașate.
+    </div>
+    <div class="ch" style="margin-bottom:14px"><div class="ctitle">Reguli trimitere documente</div><button class="btn btn-p btn-s" onclick="openModal('modal-docs')">+ Regulă nouă</button></div>
+    <div class="rep-card">
+      <div class="rep-badge rep-active">Activ</div>
+      <div style="font-size:14px;font-weight:500;margin-bottom:4px">Documente tichet → Derulator</div>
+      <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:12px">Poze + PV + facturi · email automat la finalizare</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;font-size:12px">
+        <div><div style="font-size:10px;color:var(--color-text-tertiary)">Destinatar</div><div style="font-weight:500">Radu Ioachim</div></div>
+        <div><div style="font-size:10px;color:var(--color-text-tertiary)">Email</div><div>radu@bogart.ro</div></div>
+        <div><div style="font-size:10px;color:var(--color-text-tertiary)">Subiect</div><div style="font-family:monospace;font-size:11px">Documente tichet #[ID] — [Client]</div></div>
+        <div><div style="font-size:10px;color:var(--color-text-tertiary)">Trimise luna asta</div><div style="color:#1D9E75;font-weight:500">34 emailuri ✓</div></div>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px">
+        <span class="sp sf" style="font-size:10px">📷 Poze</span>
+        <span class="sp sf" style="font-size:10px">📄 PV</span>
+        <span class="sp sf" style="font-size:10px">🧾 Facturi</span>
+      </div>
+      <div style="display:flex;gap:6px"><button class="btn btn-s" style="margin-left:auto">Editează</button><button class="btn btn-s btn-d">Dezactivează</button></div>
+    </div>
+    <div class="card">
+      <div class="ctitle" style="margin-bottom:12px">Log trimiteri recente</div>
+      <div class="table-scroll">
+        <table>
+          <tr><th>Tichet</th><th>Client</th><th>Trimis</th><th>Documente</th><th>Status</th></tr>
+          <tr><td style="color:#1D9E75;font-weight:500">#1038</td><td>Globalworth</td><td style="font-size:11px">28 mar 14:32</td><td style="font-size:11px">3 poze, 1 PV, 1 factură</td><td><span class="sp sf" style="font-size:10px">✓ Livrat</span></td></tr>
+          <tr><td style="color:#1D9E75;font-weight:500">#1036</td><td>One United</td><td style="font-size:11px">27 mar 16:18</td><td style="font-size:11px">5 poze, 1 PV</td><td><span class="sp sf" style="font-size:10px">✓ Livrat</span></td></tr>
+          <tr><td style="color:#1D9E75;font-weight:500">#1034</td><td>Skanska</td><td style="font-size:11px">26 mar 11:45</td><td style="font-size:11px">2 poze, 1 PV, 2 facturi</td><td><span class="sp su" style="font-size:10px">⚠ Eroare</span></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FILE MANAGER -->
+<div id="screen-filemanager" class="sc">
+  <div class="pt">File Manager</div><div class="ps">Acces restricționat — Admin only</div>
+  <div class="card">
+    <div class="ctitle" style="margin-bottom:10px">Baze de date &amp; Backup</div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;cursor:pointer"><div style="width:28px;height:28px;border-radius:6px;background:#E6F1FB;color:#185FA5;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500">DB</div><div style="flex:1"><div style="font-size:13px;font-weight:500">bogart_main.sql</div><div style="font-size:11px;color:var(--color-text-secondary)">2.3 GB · 29 mar</div></div><button class="btn btn-s">Download</button></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;cursor:pointer"><div style="width:28px;height:28px;border-radius:6px;background:#FAEEDA;color:#633806;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500">ZIP</div><div style="flex:1"><div style="font-size:13px;font-weight:500">backup_full_2026-03.zip</div><div style="font-size:11px;color:var(--color-text-secondary)">5.1 GB</div></div><button class="btn btn-s">Download</button></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ctitle" style="margin-bottom:10px">Arhivă tichete &amp; Rapoarte</div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;cursor:pointer"><span style="font-size:20px">📁</span><div style="flex:1"><div style="font-size:13px;font-weight:500">/rapoarte/</div><div style="font-size:11px;color:var(--color-text-secondary)">12 fișiere</div></div></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;cursor:pointer"><span style="font-size:20px">📁</span><div style="flex:1"><div style="font-size:13px;font-weight:500">/tickets/1038/</div><div style="font-size:11px;color:var(--color-text-secondary)">3 poze, 1 PV, 1 factură</div></div></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;cursor:pointer"><span style="font-size:20px">📄</span><div style="flex:1"><div style="font-size:13px;font-weight:500">raport_saptamanal_22mar.pdf</div><div style="font-size:11px;color:var(--color-text-secondary)">0.8 MB</div></div><button class="btn btn-s">Deschide</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- USAGE -->
+<div id="screen-usage" class="sc">
+  <div class="pt">Usage &amp; Costuri</div><div class="ps">Consum AI și cheltuieli platformă</div>
+  <div class="cr4">
+    <div class="mc"><div class="ml">Tokeni</div><div class="mv">2.4M</div></div>
+    <div class="mc"><div class="ml">Cost AI</div><div class="mv a">38 €</div></div>
+    <div class="mc"><div class="ml">Cost total</div><div class="mv a">187 €</div></div>
+    <div class="mc"><div class="ml">Cost/tichet</div><div class="mv g">1.03 €</div></div>
+  </div>
+  <div class="card"><div class="ctitle" style="margin-bottom:12px">Costuri lunare</div>
+    <div class="table-scroll">
+      <table>
+        <tr><th>Serviciu</th><th>€/lună</th><th>Status</th></tr>
+        <tr><td>OpenClaw / AI</td><td>38 €</td><td><span style="color:#1D9E75;font-size:12px">● activ</span></td></tr>
+        <tr><td>VPS backend</td><td>40 €</td><td><span style="color:#1D9E75;font-size:12px">● activ</span></td></tr>
+        <tr><td>Hosting site</td><td>25 €</td><td><span style="color:#1D9E75;font-size:12px">● activ</span></td></tr>
+        <tr><td>WhatsApp cartelă</td><td>15 €</td><td><span style="color:#1D9E75;font-size:12px">● activ</span></td></tr>
+        <tr><td>GPS SIM</td><td>45 €</td><td><span style="color:#1D9E75;font-size:12px">● activ</span></td></tr>
+        <tr><td style="font-weight:500">Total</td><td style="font-weight:500">187 €</td><td></td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- FLUX -->
+<div id="screen-flux" class="sc">
+  <div class="pt">Flux operațional</div><div class="ps">Diagramă și editor reguli</div>
+  <div class="card">
+    <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:20px;display:flex;flex-direction:column;align-items:center;border:0.5px solid var(--color-border-tertiary)">
+      <div class="fx-node fx-s">Tichet intrat · email / WA / manual</div><div class="fx-arr"></div>
+      <div class="fx-node">Clasificare AI · categorie · prioritate</div><div class="fx-arr"></div>
+      <div class="fx-node fx-d">Auto sau Manual?</div>
+      <div style="display:flex;gap:24px;margin:2px 0">
+        <div style="display:flex;flex-direction:column;align-items:center"><div style="width:1px;height:18px;background:var(--color-border-secondary)"></div><div style="font-size:10px;color:#1D9E75;margin:2px">Auto</div><div class="fx-node" style="font-size:11px;padding:6px 10px">Agent selectează</div></div>
+        <div style="display:flex;flex-direction:column;align-items:center"><div style="width:1px;height:18px;background:var(--color-border-secondary)"></div><div style="font-size:10px;color:var(--color-text-secondary);margin:2px">Manual</div><div class="fx-node" style="font-size:11px;padding:6px 10px">Coordonator</div></div>
+      </div>
+      <div class="fx-arr"></div>
+      <div class="fx-node">Mesaj WhatsApp → Tehnician</div><div class="fx-arr"></div>
+      <div class="fx-node fx-d">Răspuns în 15 min?</div>
+      <div style="display:flex;gap:24px;margin:2px 0">
+        <div style="display:flex;flex-direction:column;align-items:center"><div style="width:1px;height:18px;background:var(--color-border-secondary)"></div><div style="font-size:10px;color:#1D9E75;margin:2px">Preluat</div><div class="fx-node fx-s" style="font-size:11px;padding:6px 10px">GPS · Alocat</div></div>
+        <div style="display:flex;flex-direction:column;align-items:center"><div style="width:1px;height:18px;background:var(--color-border-secondary)"></div><div style="font-size:10px;color:#E24B4A;margin:2px">Nu răspunde</div><div class="fx-node fx-r" style="font-size:11px;padding:6px 10px">Realocare auto</div></div>
+      </div>
+      <div class="fx-arr"></div>
+      <div class="fx-node fx-e">Finalizat · Email documente automat</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ctitle" style="margin-bottom:12px">Reguli configurabile</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px">
+        <span>Minute până la realocare</span>
+        <input class="ni2" value="15" type="number" style="margin-left:auto">
+        <span>min</span>
+        <button class="btn btn-s">Salvează</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px">
+        <span>Mod alocare implicit</span>
+        <select style="margin-left:auto"><option>Automat (AI)</option><option>Manual</option></select>
+        <button class="btn btn-s">Salvează</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <input type="text" class="si" placeholder="Modifică fluxul în limbaj natural...">
+      <button class="btn btn-p" style="white-space:nowrap;flex-shrink:0">Aplică</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETARI -->
+<div id="screen-setari" class="sc">
+  <div class="pt">Setări</div><div class="ps">Configurare aplicație</div>
+  <div class="tabs">
+    <div class="tab on" id="st1" onclick="stab(1)">Interfață</div>
+    <div class="tab" id="st2" onclick="stab(2)">Organigrama</div>
+    <div class="tab" id="st3" onclick="stab(3)">Utilizatori</div>
+    <div class="tab" id="st4" onclick="stab(4)">Limbă</div>
+  </div>
+  <div id="sp1">
+    <div class="card">
+      <div class="ctitle" style="margin-bottom:14px">Aspect &amp; Temă</div>
+      <div class="set-row"><div><div style="font-size:14px">Mod afișare</div><div style="font-size:12px;color:var(--color-text-secondary)">Tema vizuală</div></div><div style="display:flex;gap:6px"><div class="fc act">Auto</div><div class="fc">Light</div><div class="fc">Dark</div></div></div>
+      <div class="set-row"><div><div style="font-size:14px">Animații</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+      <div class="set-row"><div><div style="font-size:14px">Notificări</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+    </div>
+  </div>
+  <div id="sp2" style="display:none">
+    <div class="card">
+      <div class="ctitle" style="margin-bottom:16px">Organigrama Bogart</div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:0;margin-bottom:20px">
+        <div style="padding:10px 20px;background:#E1F5EE;border:0.5px solid #5DCAA5;border-radius:var(--border-radius-md);font-size:13px;font-weight:500;color:#0F6E56;text-align:center">Mihai D.<br><span style="font-size:11px;font-weight:400">Director Tehnic</span></div>
+        <div style="width:1px;height:16px;background:var(--color-border-secondary)"></div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+          <div style="display:flex;flex-direction:column;align-items:center"><div style="width:1px;height:14px;background:var(--color-border-secondary)"></div><div style="padding:8px 14px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:13px;font-weight:500;text-align:center">Eugen M.<br><span style="font-size:11px;font-weight:400">Manager Tehnic</span></div></div>
+          <div style="display:flex;flex-direction:column;align-items:center"><div style="width:1px;height:14px;background:var(--color-border-secondary)"></div><div style="padding:8px 14px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:13px;font-weight:500;text-align:center">Ana G.<br><span style="font-size:11px;font-weight:400">Coordonator</span></div></div>
+          <div style="display:flex;flex-direction:column;align-items:center"><div style="width:1px;height:14px;background:var(--color-border-secondary)"></div><div style="padding:8px 14px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:13px;font-weight:500;text-align:center">Radu I.<br><span style="font-size:11px;font-weight:400">Derulator</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="sp3" style="display:none">
+    <div class="card">
+      <div class="ch"><div class="ctitle">Utilizatori sistem</div><button class="btn btn-s btn-p">+ Utilizator</button></div>
+      <div class="table-scroll">
+        <table>
+          <tr><th>Nume</th><th>Email</th><th>Rol</th><th>Activ</th><th></th></tr>
+          <tr><td style="font-weight:500">Eugen M.</td><td style="font-size:11px">eugen@bogart.ro</td><td><span class="sp sf">Admin</span></td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td><button class="btn btn-s">Edit</button></td></tr>
+          <tr><td style="font-weight:500">Mihai D.</td><td style="font-size:11px">mihai@bogart.ro</td><td><span class="sp sa">Director</span></td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td><button class="btn btn-s">Edit</button></td></tr>
+          <tr><td style="font-weight:500">Ana G.</td><td style="font-size:11px">ana@bogart.ro</td><td><span class="sp sn">Coordonator</span></td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td><button class="btn btn-s">Edit</button></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div id="sp4" style="display:none">
+    <div class="card">
+      <div class="ctitle" style="margin-bottom:14px">Limbă &amp; Regional</div>
+      <div class="set-row"><div><div style="font-size:14px">Limbă interfață</div></div><div style="display:flex;gap:6px"><div class="fc act">Română</div><div class="fc">English</div></div></div>
+      <div class="set-row"><div><div style="font-size:14px">Monedă</div></div><div style="display:flex;gap:6px"><div class="fc act">EUR (€)</div><div class="fc">RON (lei)</div></div></div>
+      <div class="set-row"><div><div style="font-size:14px">Fus orar</div></div><select><option>Europe/Bucharest (UTC+3)</option></select></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<!-- ===== MODALS ===== -->
+<div id="modal-raport" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title">Raport periodic nou <span class="modal-close" onclick="closeModal('modal-raport')">×</span></div>
+    <div style="margin-bottom:12px"><label class="form-label">Tip raport</label><select class="form-select"><option>Raport operațional tichete</option><option>Raport financiar</option><option>Raport pontaj</option><option>Raport KPI tehnicieni</option></select></div>
+    <div class="form-row">
+      <div><label class="form-label">Recurență</label><select class="form-select"><option>Zilnic</option><option>Săptămânal</option><option>Lunar</option></select></div>
+      <div><label class="form-label">Ora</label><select class="form-select"><option>07:00</option><option>08:00</option><option>09:00</option><option>18:00</option></select></div>
+    </div>
+    <div style="margin-bottom:12px"><label class="form-label">Destinatar (TESA · Raportare = Da)</label>
+      <select class="form-select"><option>— selectează —</option><option>Eugen Munteanu (Manager Tehnic)</option><option>Mihai Dumitrescu (Director Tehnic)</option><option>Ana Gheorghe (Coordonator)</option></select>
+      <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:4px">Email și telefon se completează automat</div>
+    </div>
+    <div class="form-row">
+      <div><label class="form-label">Email (auto)</label><input class="form-input" placeholder="completat automat" readonly style="color:var(--color-text-secondary)"></div>
+      <div><label class="form-label">Telefon (auto)</label><input class="form-input" placeholder="completat automat" readonly style="color:var(--color-text-secondary)"></div>
+    </div>
+    <div style="margin-bottom:14px">
+      <label class="form-label">Canal trimitere</label>
+      <div style="display:flex;gap:10px;margin-top:6px">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;padding:10px 14px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);cursor:pointer;flex:1"><input type="checkbox" checked style="accent-color:#1D9E75;width:16px;height:16px"> 📧 Email</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;padding:10px 14px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);cursor:pointer;flex:1"><input type="checkbox" style="accent-color:#1D9E75;width:16px;height:16px"> 💬 WhatsApp</label>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+      <button class="btn" onclick="closeModal('modal-raport')">Anulează</button>
+      <button class="btn btn-p">Salvează &amp; Activează</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-docs" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title">Regulă documente tichete <span class="modal-close" onclick="closeModal('modal-docs')">×</span></div>
+    <div style="padding:10px 12px;background:var(--color-background-info);border-radius:var(--border-radius-md);margin-bottom:14px;font-size:13px;color:var(--color-text-info)">
+      Trimite automat documentele tichetului finalizat prin email, cu subiectul conținând #ID.
+    </div>
+    <div style="margin-bottom:12px"><label class="form-label">Destinatar</label><select class="form-select"><option>— selectează —</option><option>Radu Ioachim (Derulator)</option><option>Eugen Munteanu (Manager)</option></select></div>
+    <div class="form-row">
+      <div><label class="form-label">Email (auto)</label><input class="form-input" placeholder="completat automat" readonly style="color:var(--color-text-secondary)"></div>
+      <div><label class="form-label">Rol în email</label><select class="form-select"><option>TO (destinatar)</option><option>CC (copie)</option><option>BCC</option></select></div>
+    </div>
+    <div style="margin-bottom:12px"><label class="form-label">Subiect email</label><input class="form-input" value="Documente tichet #[ID] — [Client] — [Data]"><div style="font-size:11px;color:var(--color-text-tertiary);margin-top:3px">Variabile: [ID] [Client] [Data] [Echipa]</div></div>
+    <div style="margin-bottom:14px"><label class="form-label">Documente incluse</label>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px"><input type="checkbox" checked style="accent-color:#1D9E75;width:16px;height:16px"> 📷 Poze înainte/după</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px"><input type="checkbox" checked style="accent-color:#1D9E75;width:16px;height:16px"> 📄 Proces verbal (PV)</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px"><input type="checkbox" checked style="accent-color:#1D9E75;width:16px;height:16px"> 🧾 Facturi materiale</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px"><input type="checkbox" style="accent-color:#1D9E75;width:16px;height:16px"> 📋 Raport agent</label>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" onclick="closeModal('modal-docs')">Anulează</button><button class="btn btn-p">Salvează</button></div>
+  </div>
+</div>
+
+<div id="modal-tesa" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title">Persoană TESA nouă <span class="modal-close" onclick="closeModal('modal-tesa')">×</span></div>
+    <div class="form-row"><div><label class="form-label">Prenume</label><input class="form-input" placeholder="Ana"></div><div><label class="form-label">Nume</label><input class="form-input" placeholder="Gheorghe"></div></div>
+    <div style="margin-bottom:12px"><label class="form-label">Funcție</label><select class="form-select"><option>— selectează —</option><option>Director Tehnic</option><option>Manager Tehnic</option><option>Coordonator</option><option>Derulator</option><option>Manager Proiect</option></select></div>
+    <div class="form-row"><div><label class="form-label">Email</label><input class="form-input" type="email" placeholder="ana@bogart.ro"></div><div><label class="form-label">Telefon / WhatsApp</label><input class="form-input" type="tel" placeholder="+40 7xx xxx xxx"></div></div>
+    <div style="margin-bottom:12px"><label class="form-label">Drepturi aplicație</label><select class="form-select"><option>— selectează —</option><option>Admin</option><option>Director (read-only)</option><option>Coordonator</option><option>Derulator</option><option>Fără acces</option></select></div>
+    <div style="margin-bottom:14px"><label class="form-label">Raportare automată</label>
+      <div style="display:flex;gap:16px;margin-top:8px">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="radio" name="rap" checked style="accent-color:#1D9E75;width:16px;height:16px"> Da — apare în Rapoarte</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="radio" name="rap" style="accent-color:#1D9E75;width:16px;height:16px"> Nu</label>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" onclick="closeModal('modal-tesa')">Anulează</button><button class="btn btn-p">Salvează</button></div>
+  </div>
+</div>
+
+<div id="modal-echipa" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title">Echipă nouă <span class="modal-close" onclick="closeModal('modal-echipa')">×</span></div>
+    <div style="margin-bottom:12px"><label class="form-label">Nume echipă</label><input class="form-input" placeholder="ex: E3 — Dumitru"></div>
+    <div style="font-size:13px;font-weight:500;margin-bottom:10px;color:var(--color-text-secondary)">Tehnician 1</div>
+    <div class="form-row"><div><label class="form-label">Nume complet</label><input class="form-input" placeholder="Ion Popescu"></div><div><label class="form-label">Specialitate</label><select class="form-select"><option>HVAC</option><option>Electric</option><option>Instalații</option><option>Handyman</option></select></div></div>
+    <div class="form-row"><div><label class="form-label">Telefon / WhatsApp</label><input class="form-input" type="tel" placeholder="+40 7xx xxx xxx"></div><div><label class="form-label">Email</label><input class="form-input" type="email" placeholder="opțional"></div></div>
+    <div style="font-size:13px;font-weight:500;margin-bottom:10px;color:var(--color-text-secondary)">Tehnician 2</div>
+    <div class="form-row"><div><label class="form-label">Nume complet</label><input class="form-input" placeholder="Andrei Radu"></div><div><label class="form-label">Specialitate</label><select class="form-select"><option>HVAC</option><option>Electric</option><option>Instalații</option></select></div></div>
+    <div class="form-row"><div><label class="form-label">Telefon / WhatsApp</label><input class="form-input" type="tel" placeholder="+40 7xx xxx xxx"></div><div><label class="form-label">Email</label><input class="form-input" type="email" placeholder="opțional"></div></div>
+    <div style="margin-bottom:14px"><label class="form-label">Mașină alocată</label><select class="form-select"><option>— selectează —</option><option>B-123-BBM · Renault Trafic</option><option>B-456-BBM · VW Crafter</option><option>B-789-BBM · Mercedes</option></select></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" onclick="closeModal('modal-echipa')">Anulează</button><button class="btn btn-p">Salvează</button></div>
+  </div>
+</div>
+
+<script>
+function doLogin(){document.getElementById('ls').style.display='none'}
+
+function toggleSidebar(){
+  var sb=document.getElementById('sidebar');
+  var ov=document.getElementById('sidebarOverlay');
+  var hb=document.getElementById('hamBtn');
+  var isOpen=sb.classList.contains('open');
+  if(isOpen){closeSidebar()}
+  else{sb.classList.add('open');ov.classList.add('open');hb.classList.add('open')}
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+  document.getElementById('hamBtn').classList.remove('open');
+}
+
+function go(id){
+  document.querySelectorAll('.sc').forEach(s=>s.classList.remove('act'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('act'));
+  var el=document.getElementById('screen-'+id);
+  if(el)el.classList.add('act');
+  document.querySelectorAll('.ni').forEach(function(n){
+    if((n.getAttribute('onclick')||'').includes("'"+id+"'"))n.classList.add('act');
+  });
+  closeSidebar();
+  window.scrollTo(0,0);
+}
+
+function ftab(n){
+  [1,2,3,4].forEach(function(i){
+    var t=document.getElementById('ft'+i),p=document.getElementById('fp'+i);
+    if(!t||!p)return;
+    if(i===n){t.className='tab on';p.style.display='block'}
+    else{t.className='tab';p.style.display='none'}
+  });
+}
+function stab(n){
+  [1,2,3,4].forEach(function(i){
+    var t=document.getElementById('st'+i),p=document.getElementById('sp'+i);
+    if(!t||!p)return;
+    if(i===n){t.className='tab on';p.style.display='block'}
+    else{t.className='tab';p.style.display='none'}
+  });
+}
+function rtab(n){
+  [1,2].forEach(function(i){
+    var t=document.getElementById('rt'+i),p=document.getElementById('rp'+i);
+    if(!t||!p)return;
+    if(i===n){t.className='tab on';p.style.display='block'}
+    else{t.className='tab';p.style.display='none'}
+  });
+}
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(function(ov){
+  ov.addEventListener('click',function(e){if(e.target===ov)ov.classList.remove('open')});
+});
+// Close sidebar on Escape
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeSidebar();document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'))}});
+</script>
+</body>
+</html>
